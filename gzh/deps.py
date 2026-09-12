@@ -120,8 +120,8 @@ def _analyzer_candidates() -> list[Path]:
     explicit = os.environ.get("GZH_DEPENDENCY_ANALYZER")
     if explicit:
         candidates.append(Path(explicit).expanduser())
-    source_root = Path(__file__).resolve().parents[2]
-    candidates.append(source_root / ".agents" / "skills" / ANALYZER_RELATIVE)
+    source_root = Path(__file__).resolve().parents[1]
+    candidates.append(source_root / "scripts" / "dependency_analyzer.py")
     state_path = _installation_state_path()
     if state_path.is_file():
         try:

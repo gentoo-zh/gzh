@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Testing / tooling
+.pytest_cache/
+.venv/
+.coverage
+.mypy_cache/
+
+# Local gentoo-zh overlay checkout for L3 smoke testing (do not track)
+
