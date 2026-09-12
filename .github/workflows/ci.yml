@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     container: gentoo/stage3:amd64-desktop-openrc
     steps:
-      - run: emerge -q --getbinpkg dev-vcs/git
+      - run: emerge-webrsync -q && emerge -q --getbinpkg dev-vcs/git
       - uses: actions/checkout@v7
       - run: |
           python3 -m venv --system-site-packages .venv
