@@ -1,0 +1,17 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: gentoo/stage3:amd64-desktop-openrc
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          python3 -m venv --system-site-packages .venv
+          .venv/bin/pip install -q -e '.[test]'
+          .venv/bin/python -m pytest -q

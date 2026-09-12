@@ -16,9 +16,9 @@ def state_dir(env: Mapping[str, str] | None = None) -> Path:
     if xdg_state_home := values.get("XDG_STATE_HOME"):
         candidate = Path(xdg_state_home).expanduser()
         if candidate.is_absolute():
-            return candidate / "gentoo-zh-skills"
+            return candidate / "gzh"
     base = Path.home() / ".local" / "state"
-    return base / "gentoo-zh-skills"
+    return base / "gzh"
 
 
 def queue_dir(env: Mapping[str, str] | None = None) -> Path:

@@ -17,8 +17,6 @@ from typing import Any
 
 
 DEPENDENCY_FIELDS = ("DEPEND", "RDEPEND", "BDEPEND", "IDEPEND", "PDEPEND")
-ANALYZER_RELATIVE = Path(
-    "gentoo-overlay-development/scripts/dependency_analyzer.py")
 COMPARISON_SCHEMA_VERSION = 1
 COMPARISON_TOOL = "gzh-dependency-comparison"
 MAX_METADATA_BYTES = 1024 * 1024
@@ -108,13 +106,6 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _installation_state_path() -> Path:
-    home = Path.home()
-    data_home = Path(os.environ.get(
-        "XDG_DATA_HOME", home / ".local" / "share")).expanduser()
-    return data_home / "gentoo-zh-skills" / "skill-installations.json"
-
-
 def _analyzer_candidates() -> list[Path]:
     candidates: list[Path] = []
     explicit = os.environ.get("GZH_DEPENDENCY_ANALYZER")
@@ -122,15 +113,6 @@ def _analyzer_candidates() -> list[Path]:
         candidates.append(Path(explicit).expanduser())
     source_root = Path(__file__).resolve().parents[1]
     candidates.append(source_root / "scripts" / "dependency_analyzer.py")
-    state_path = _installation_state_path()
-    if state_path.is_file():
-        try:
-            state = json.loads(state_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            state = {}
-        for target in state.get("targets", []) if isinstance(state, dict) else []:
-            if isinstance(target, dict) and isinstance(target.get("target"), str):
-                candidates.append(Path(target["target"]) / ANALYZER_RELATIVE)
     result: list[Path] = []
     for candidate in candidates:
         candidate = candidate.resolve(strict=False)

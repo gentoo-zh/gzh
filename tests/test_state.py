@@ -17,7 +17,7 @@ def test_state_dir_uses_override():
 
 def test_state_dir_uses_xdg_state_home():
     assert state_dir({"XDG_STATE_HOME": "/tmp/xdg-state"}) == \
-        Path("/tmp/xdg-state/gentoo-zh-skills")
+        Path("/tmp/xdg-state/gzh")
 
 
 def test_state_dir_rejects_relative_override():
@@ -28,7 +28,7 @@ def test_state_dir_rejects_relative_override():
 def test_state_dir_ignores_relative_xdg(monkeypatch, tmp_path):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     assert state_dir({"XDG_STATE_HOME": "relative/state"}) == \
-        tmp_path / ".local" / "state" / "gentoo-zh-skills"
+        tmp_path / ".local" / "state" / "gzh"
 
 
 def test_state_dir_command(monkeypatch, tmp_path):
