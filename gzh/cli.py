@@ -589,7 +589,11 @@ def nvchecker_config_set_cmd(cat_pkg, json_entry):
         raise click.UsageError("--json is required")
     root = find_overlay_root()
     overlay_toml = root / ".github" / "workflows" / "overlay.toml"
-    set_entry(overlay_toml, cat_pkg, _json.loads(json_entry))
+    try:
+        entry = _json.loads(json_entry)
+    except _json.JSONDecodeError as exc:
+        raise click.UsageError(f"--json is not valid JSON: {exc}") from exc
+    set_entry(overlay_toml, cat_pkg, entry)
     click.echo("NOTE: overlay.toml updated. Review the diff.")
 
 
@@ -1217,7 +1221,8 @@ def ci_cmd(pr_number, repo, watch, interval, timeout):
         "final": snapshot,
     }
     click.echo(_json.dumps(report, indent=2, ensure_ascii=False))
-    if not snapshot["complete"] or snapshot["checks_state"] != "passed":
+    if (not snapshot["complete"] or snapshot["checks_state"] != "passed"
+            or snapshot.get("final_pr_state") == "closed"):
         raise SystemExit(1)
 
 
