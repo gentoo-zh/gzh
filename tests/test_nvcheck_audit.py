@@ -235,3 +235,18 @@ def test_run_audit_skips_bad_ebuild(tmp_path):
     assert res["ok"] is True
     assert "cat/bad" in res["skipped_unknown"]
     assert any(m["cat_pkg"] == "cat/good" for m in res["missing"])
+
+
+def test_run_audit_reads_the_highest_version_not_the_last_name(tmp_path):
+    root = _overlay(tmp_path)
+    d = root / "cat" / "gh"
+    # 1.10 sorts before 1.9 by name but is the newer version
+    (d / "gh-1.10.ebuild").write_text(
+        'EAPI=8\nHOMEPAGE="https://github.com/o/new"\nSRC_URI=""\nSLOT="0"\n')
+    (d / "gh-1.9.ebuild").write_text(
+        'EAPI=8\nHOMEPAGE="https://github.com/o/old"\nSRC_URI=""\nSLOT="0"\n')
+    (d / "gh-1.0.ebuild").unlink()
+    set_calls = {}
+    run_audit(apply=True, overlay_root=root,
+              set_entry_fn=lambda toml, cat_pkg, entry: set_calls.__setitem__(cat_pkg, entry))
+    assert set_calls["cat/gh"]["github"] == "o/new"

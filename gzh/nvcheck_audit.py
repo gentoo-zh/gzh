@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import re
 import tomllib
+from functools import cmp_to_key
 from pathlib import Path
+
+from portage.versions import vercmp
 
 from gzh.ebuild_parser import parse_ebuild
 from gzh.nvchecker_config import set_entry
@@ -85,7 +88,10 @@ def run_audit(apply: bool = False, filter_system: bool = True,
     for cat_pkg in missing:
         cat, pn = cat_pkg.split("/", 1)
         pkg_dir = root / cat / pn
-        ebs = sorted(pkg_dir.glob(f"{pn}-*.ebuild"))
+        ebs = sorted(pkg_dir.glob(f"{pn}-*.ebuild"),
+                     key=cmp_to_key(lambda a, b: vercmp(
+                         a.name[len(pn) + 1:].removesuffix(".ebuild"),
+                         b.name[len(pn) + 1:].removesuffix(".ebuild")) or 0))
         if not ebs:
             continue
         pvs = [eb.name[len(pn) + 1:].removesuffix(".ebuild") for eb in ebs]
