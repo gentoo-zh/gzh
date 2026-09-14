@@ -59,6 +59,8 @@ def extract_src_uri_map(ebuild_text: str, subs: dict | None = None) -> dict:
     subs = subs or {}
     values = [m.group(2) for m in
               re.finditer(r"\bSRC_URI\s*\+?=\s*([\"'])(.*?)\1", ebuild_text or "", re.DOTALL)]
+    # an unquoted single-token value is legal shell too
+    values += re.findall(r"(?m)^\s*SRC_URI\s*\+?=\s*([^\"'\s#][^\s#]*)", ebuild_text or "")
     tokens = " ".join(values).split()
     out: dict[str, str] = {}
     i = 0

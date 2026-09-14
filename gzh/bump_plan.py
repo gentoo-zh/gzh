@@ -35,7 +35,7 @@ _SRC_URI_RE = re.compile(
 _SRC_URI_UNQUOTED_RE = re.compile(
     r"(?m)^\s*SRC_URI\s*\+?=\s*([^\"'\s#][^\s#]*)")
 _VARIABLE_ASSIGNMENT_RE = re.compile(
-    r"(?m)^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"
+    r"(?m)^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(\+?)=\s*"
     r"(?:\"([^\"]*)\"|'([^']*)'|([^\s#]+))")
 _VARIABLE_REFERENCE_RE = re.compile(
     r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")
@@ -46,11 +46,12 @@ def _src_uri_evidence(text: str) -> str:
         *(match.group(2) for match in _SRC_URI_RE.finditer(text)),
         *(match.group(1) for match in _SRC_URI_UNQUOTED_RE.finditer(text)),
     ]
-    assignments = {
-        match.group(1): next(
-            value for value in match.groups()[1:] if value is not None)
-        for match in _VARIABLE_ASSIGNMENT_RE.finditer(text)
-    }
+    assignments: dict[str, str] = {}
+    for match in _VARIABLE_ASSIGNMENT_RE.finditer(text):
+        name, append = match.group(1), match.group(2)
+        value = next(v for v in match.groups()[2:] if v is not None)
+        # VAR+= appends in shell; MY_ASSET="foo" then MY_ASSET+=".deb" is foo.deb
+        assignments[name] = (assignments.get(name, "") + value) if append else value
     pending = list(values)
     seen = set()
     while pending:
@@ -66,7 +67,7 @@ def _src_uri_evidence(text: str) -> str:
 
 
 def _prebuilt_indicators(path: Path, package: str) -> list[str]:
-    text = path.read_text(encoding="utf-8")
+    text = re.sub(r"\\\n", "", path.read_text(encoding="utf-8"))
     scan_text = "\n".join(
         line for line in text.splitlines() if not line.lstrip().startswith("#"))
     src_uri = _src_uri_evidence(scan_text)

@@ -42,3 +42,9 @@ def test_manifest_passes_writable_distdir(tmp_path):
     run_manifest(tmp_path / "foo-1.ebuild", cwd=tmp_path,
                  distdir=distdir, runner=fake_run)
     assert seen["args"][seen["args"].index("--distdir") + 1] == str(distdir)
+
+
+def test_src_uri_map_accepts_an_unquoted_value():
+    from gzh.manifest import extract_src_uri_map
+    assert extract_src_uri_map("SRC_URI=https://x/foo-1.tar.xz\n") == {
+        "foo-1.tar.xz": "https://x/foo-1.tar.xz"}
