@@ -486,10 +486,11 @@ def inspect_elf(
     needed = _dynamic_values(text, "NEEDED")
     runtime_dependencies, unresolved = _runtime_dependencies(
         lddtree_report["stdout"] if lddtree_report["ok"] else "")
+    # a static ELF has no DT_NEEDED, so lddtree legitimately lists nothing
     lddtree_output_valid = bool(
         lddtree_report["ok"]
         and lddtree_report["stdout"].strip()
-        and runtime_dependencies)
+        and (runtime_dependencies or not needed))
     resolution_by_name: dict[str, list[dict]] = {}
     for dependency in runtime_dependencies:
         if dependency["root"]:
