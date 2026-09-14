@@ -518,6 +518,40 @@ def test_ci_cli_preserves_complete_job_names(monkeypatch):
     assert report["final"]["final_pr_state"] == "merged"
 
 
+def test_ci_cli_rejects_a_pull_request_closed_without_merge(monkeypatch):
+    monkeypatch.setattr(cli_mod, "read_ci", lambda repository, number: {
+        "complete": True,
+        "state": "CLOSED",
+        "merged": False,
+        "head_sha": "a" * 40,
+        "url": "https://github.example/pull/1",
+        "checks_complete": True,
+        "checks": [{
+            "name": "emerge =cat/pkg-1",
+            "url": "https://github.example/job/1",
+            "status": "COMPLETED",
+            "conclusion": "SUCCESS",
+        }],
+    })
+    result = CliRunner().invoke(cli_mod.cli, ["ci", "1"])
+
+    # green checks on a PR nobody can merge are not a passed gate
+    assert result.exit_code == 1, result.output
+    assert json.loads(result.output)["final"]["final_pr_state"] == "closed"
+
+
+def test_nvchecker_config_set_rejects_malformed_json_without_a_traceback(monkeypatch, tmp_path):
+    wf = tmp_path / ".github" / "workflows"
+    wf.mkdir(parents=True)
+    (wf / "overlay.toml").write_text('["cat/pkg"]\nsource = "github"\n')
+    monkeypatch.setattr(cli_mod, "find_overlay_root", lambda *a, **k: tmp_path)
+    result = CliRunner().invoke(cli_mod.cli, ["nvchecker-config", "set", "cat/pkg", "--json", "{"])
+
+    assert result.exit_code == 2, result.output
+    assert "not valid JSON" in result.output and "Traceback" not in result.output
+    assert (wf / "overlay.toml").read_text() == '["cat/pkg"]\nsource = "github"\n'
+
+
 def test_pr_plan_cli_records_content_addressed_local_evidence(monkeypatch, tmp_path):
     repository = tmp_path / "overlay"
     repository.mkdir()
