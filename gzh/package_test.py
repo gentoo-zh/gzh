@@ -218,7 +218,7 @@ def _fallback_cleanup(
 ) -> dict:
     targets = [path for path in (*files, *directories) if _path_exists(path)]
     commands = ([
-        "rm", "-d", "-f", "--", *(str(path) for path in targets),
+        "rm", "-r", "-f", "--", *(str(path) for path in targets),
     ],) if targets else ()
     steps = [
         run_evidence_command(
