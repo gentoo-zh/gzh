@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 
+from gzh.ebuild_parser import is_live
+
 SUPPORTED_EAPI = {"7", "8", "9"}
 REQUIRED_VARS = ("DESCRIPTION", "HOMEPAGE", "LICENSE", "SRC_URI", "SLOT")
 # eclasses that provide SRC_URI themselves, so an ebuild inheriting them need
@@ -13,9 +15,8 @@ def _src_uri_provided(parsed: dict) -> bool:
     inherit = set(parsed.get("inherit", []))
     if inherit & SRC_URI_ECLASSES:
         return True
-    pv = str(parsed.get("PV", ""))
-    # live ebuilds (9999) have no upstream distfile SRC_URI
-    return pv == "9999" or pv.startswith("9999.")
+    # live ebuilds (9999, 99999999, ...) have no upstream distfile SRC_URI
+    return is_live(str(parsed.get("PV", "")))
 
 
 def _phase_body(source_text: str, phase: str) -> str | None:

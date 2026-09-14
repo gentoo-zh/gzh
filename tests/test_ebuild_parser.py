@@ -38,3 +38,11 @@ def test_parse_inherit(tmp_path):
     eb = tmp_path / "foo-1.0.ebuild"
     eb.write_text("EAPI=8\ninherit distutils-r1 pypi\n")
     assert parse_ebuild(eb)["inherit"] == ["distutils-r1", "pypi"]
+
+
+def test_plus_equals_appends_and_initializes(tmp_path):
+    e = tmp_path / "foo-1.ebuild"
+    e.write_text('EAPI=8\nSRC_URI+="https://x/foo-1.tar.xz"\nLICENSE="MIT"\nLICENSE+=" BSD"\n')
+    parsed = parse_ebuild(e)
+    assert parsed["SRC_URI"] == "https://x/foo-1.tar.xz"
+    assert parsed["LICENSE"] == "MIT BSD"

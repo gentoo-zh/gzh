@@ -367,3 +367,17 @@ def test_bump_scaffold_refreshes_the_copied_copyright_year(tmp_path):
     (d / "foo-1.0.0.ebuild").write_text("# Copyright 1999-2024 Gentoo Authors\nEAPI=8\n")
     new = bump_scaffold(d, "foo", "1.1.0")
     assert new.read_text().startswith(f"# Copyright 1999-{date.today().year} Gentoo Authors\n")
+
+
+def test_prebuilt_indicator_survives_a_line_continued_inherit(tmp_path):
+    from gzh.bump_plan import _prebuilt_indicators
+    e = tmp_path / "foo-1.ebuild"
+    e.write_text('EAPI=8\ninherit \\\n\trpm\nSRC_URI="https://example.invalid/${P}.asset"\n')
+    assert "ebuild-eclass:rpm" in _prebuilt_indicators(e, "foo")
+
+
+def test_prebuilt_indicator_follows_an_appended_variable(tmp_path):
+    from gzh.bump_plan import _prebuilt_indicators
+    e = tmp_path / "foo-1.ebuild"
+    e.write_text('EAPI=8\nMY_ASSET="foo"\nMY_ASSET+=".deb"\nSRC_URI="https://example.invalid/${MY_ASSET}"\n')
+    assert "src-uri:binary-container" in _prebuilt_indicators(e, "foo")

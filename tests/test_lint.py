@@ -193,3 +193,9 @@ src_install() {
 
     assert not any(
         issue["rule"] == "archive-extraction-in-src-install" for issue in issues)
+
+
+def test_every_9999_prefixed_live_version_needs_no_src_uri():
+    for pv in ("9999", "9999.1", "99999999"):
+        live = {**_good(), "PV": pv, "SRC_URI": ""}
+        assert not any(i["rule"] == "missing-src_uri" for i in lint_ebuild(live)), pv
