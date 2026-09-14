@@ -166,3 +166,18 @@ def test_command_evidence_passes_environment_to_bounded_process():
     assert evidence["complete"] is True
     assert evidence["returncode"] == 0
     assert evidence["stdout"] == "explicit-value\n"
+
+
+def test_relative_directory_target_is_resolved_before_the_cwd_change(tmp_path, monkeypatch):
+    (tmp_path / "cat" / "pkg").mkdir(parents=True)
+    monkeypatch.chdir(tmp_path)
+    seen = {}
+
+    def fake(args, **kwargs):
+        seen["target"], seen["cwd"] = args[-1], kwargs.get("cwd")
+        return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+
+    run_pkgcheck(Path("cat/pkg"), runner=fake)
+    # with cwd=cat/pkg a relative target would be looked up as cat/pkg/cat/pkg
+    assert Path(seen["target"]).is_absolute()
+    assert Path(seen["target"]) == (tmp_path / "cat" / "pkg").resolve()

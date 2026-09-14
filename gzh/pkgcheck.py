@@ -192,6 +192,9 @@ def run_pkgcheck(path: Path, min_severity: str = "warning",
         args.append(f"--profiles={','.join(requested_profiles)}")
     if net:  # enables the DeadUrl/RedirectedUrl network keychecks
         args.append("--net")
+    # the scan runs with cwd=path, so a relative target must be absolute or
+    # pkgcheck looks for cat/pkg/cat/pkg
+    path = Path(path).resolve()
     args.append(str(path))
     report = _scan_report(
         args, path if path.is_dir() else None, path, runner, timeout,
