@@ -291,3 +291,25 @@ wait
         time.sleep(0.01)
     else:
         pytest.fail(f"flood child {child_pid} survived process-group cleanup")
+
+
+READELF_STATIC = """\
+ELF Header:
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  Type:                              EXEC (Executable file)
+  Machine:                           Advanced Micro Devices X86-64
+  LOAD 0x0 0x0 0x0 0x100 0x100 R E 0x1000
+  GNU_STACK 0x0 0x0 0x0 0x0 0x0 RW 0x10
+"""
+
+
+def test_a_static_elf_with_no_needed_is_complete(tmp_path):
+    target = _elf(tmp_path / "static")
+    # lddtree prints only the root record for a static binary
+    report = inspect_elf(
+        target, runner=_runner(READELF_STATIC, lddtree="static (interpreter => none)\n"))
+
+    assert report["elf"]["needed"] == []
+    assert report["complete"] is True, [f["code"] for f in report["findings"]]
+    assert report["ok"] is True
