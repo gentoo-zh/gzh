@@ -57,6 +57,12 @@ def _package_atom(ebuild: Path) -> str:
     return ebuild.stem
 
 
+def _deferred_only(message: str) -> bool:
+    notices = [line for line in message.splitlines() if "QA Notice" in line]
+    return bool(notices) and all(
+        any(deferred in line for deferred in _DEFERRED_QA) for line in notices)
+
+
 def _elog_records(inventory: Mapping, atom: str) -> list[dict]:
     records: list[dict] = []
     for entry in inventory.get("entries", []):
@@ -235,9 +241,10 @@ def run_build_test(ebuild: Path, level: str = "full",
             break
     elog_inventory = _elog_inventory(elog_dir, _MAX_ELOG_BYTES)
     elog_records = _elog_records(elog_inventory, atom)
+    # A saved elog whose notices are all of a deferred class (see _DEFERRED_QA)
+    # is the merge gate's business, not this one's; anything else saved fails.
     elog_gate_failed = any(
-        entry.get("kind") == "file"
-        for entry in elog_inventory["entries"])
+        not _deferred_only(record["message"]) for record in elog_records)
     phase_execution_complete = all(
         step["complete"] is True and step["truncated"] is not True
         for step in phase_steps)

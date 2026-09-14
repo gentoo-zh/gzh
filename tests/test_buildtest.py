@@ -225,3 +225,35 @@ def test_build_stops_before_phases_when_environment_evidence_is_incomplete(
         ["portageq", "envvar", "ARCH"],
         ["eselect", "--brief", "profile", "show"],
     ]
+
+
+def _elog_runner(body):
+    def runner(args, **kwargs):
+        if evidence := _portage_evidence(args):
+            return evidence
+        logdir = (kwargs.get("env") or {}).get("PORTAGE_LOGDIR")
+        if logdir and args[-1] == "install":
+            elog = Path(logdir) / "elog"
+            elog.mkdir(parents=True, exist_ok=True)
+            (elog / "cat:pkg-1:20260914.log").write_text(body)
+        return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+    return runner
+
+
+def test_saved_elog_of_only_the_deferred_class_does_not_fail_the_gate(tmp_path):
+    res = run_build_test(_eb(tmp_path), level="full", runner=_elog_runner(
+        "QA: install\nQA Notice: Unresolved soname dependencies: libfoo.so.1\n"))
+    assert res["ok"] is True, res["failure_reason"]
+
+
+def test_any_other_saved_elog_still_fails_the_gate(tmp_path):
+    res = run_build_test(_eb(tmp_path), level="full", runner=_elog_runner(
+        "QA: install\nQA Notice: Pre-stripped files found:\n/usr/bin/x\n"))
+    assert res["ok"] is False and res["failure_reason"] == "elog_gate_failed"
+
+
+def test_a_deferred_notice_beside_a_real_one_still_fails(tmp_path):
+    res = run_build_test(_eb(tmp_path), level="full", runner=_elog_runner(
+        "QA: install\nQA Notice: Unresolved soname dependencies: libfoo.so.1\n"
+        "QA Notice: Pre-stripped files found:\n/usr/bin/x\n"))
+    assert res["ok"] is False
