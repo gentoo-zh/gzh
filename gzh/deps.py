@@ -111,8 +111,8 @@ def _analyzer_candidates() -> list[Path]:
     explicit = os.environ.get("GZH_DEPENDENCY_ANALYZER")
     if explicit:
         candidates.append(Path(explicit).expanduser())
-    source_root = Path(__file__).resolve().parents[1]
-    candidates.append(source_root / "scripts" / "dependency_analyzer.py")
+    # shipped inside the package so a wheel install carries it too
+    candidates.append(Path(__file__).resolve().parent / "dependency_analyzer.py")
     result: list[Path] = []
     for candidate in candidates:
         candidate = candidate.resolve(strict=False)
