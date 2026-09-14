@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -37,7 +38,8 @@ class TattRunner:
             for value in args[4:]:
                 path = Path(value)
                 if path.is_dir():
-                    path.rmdir()
+                    # the real rm: -r takes a populated directory, -d only an empty one
+                    shutil.rmtree(path) if "-r" in args[1:4] else path.rmdir()
                 else:
                     path.unlink(missing_ok=True)
             return subprocess.CompletedProcess(args, 0, "removed files\n", "")
@@ -49,7 +51,10 @@ class TattRunner:
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_text("generated\n", encoding="utf-8")
                 for path in directories:
+                    # tatt writes package.use/<job>/<pkg> inside, so the
+                    # directory the fallback has to remove is never empty
                     path.mkdir(parents=True, exist_ok=True)
+                    (path / "cat-pkg").write_text("cat/pkg test\n", encoding="utf-8")
             if self.create_script:
                 script = cwd / f"{job_name}.sh"
                 script.write_text("#!/bin/sh\n", encoding="utf-8")
@@ -171,7 +176,7 @@ def test_generation_failure_without_script_uses_exact_fallback_cleanup(
 
     files, directories = package_test._portage_config_paths("partial-generation")
     expected_rm = [
-        "rm", "-d", "-f", "--",
+        "rm", "-r", "-f", "--",
         *(str(path) for path in (*files, *directories)),
     ]
     assert report["state"] == "generation-failed"
