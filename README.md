@@ -1,5 +1,8 @@
 # gzh
 
+> [!WARNING]
+> 自 2026-11-15 起暂停维护，以后可能重写，请勿使用。gentoo-zh/skills 的步骤不依赖本工具。
+
 gentoo-zh overlay 维护用的确定性命令行工具：bump、依赖比对、Manifest、pkgcheck、构建测试、issue 批处理。原来放在 [gentoo-zh/skills](https://github.com/gentoo-zh/skills)，拆出来单独维护；skill 只写步骤，不依赖它。
 
 ```bash
